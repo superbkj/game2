@@ -15,6 +15,13 @@ class Entity {
   update() {
     this.updatePosition();
   }
+
+  getDistance(pt) {
+    return Math.sqrt(
+      Math.pow(this.x - pt.x, 2)
+      + Math.pow(this.y - pt.y, 2)
+    );
+  }
 }
 
 module.exports = Entity;

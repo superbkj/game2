@@ -1,5 +1,6 @@
 //import Entity from "./Entity.js";
 const Entity = require("./Entity.js");
+const Bullet = require("./Bullet.js");
 
 class Player extends Entity {
   static list = {};
@@ -12,6 +13,8 @@ class Player extends Entity {
     this.pressingLeft = false;
     this.pressingUp = false;
     this.pressingDown = false;
+    this.pressingAttack = false;
+    this.mouseAngle = 0;
     this.maxSpd = 10;
 
     Player.list[id] = this;
@@ -44,6 +47,24 @@ class Player extends Entity {
   update() {
     this.updateSpd();
     super.update();
+
+    if (this.pressingAttack) {
+      this.shootBullet(this.mouseAngle);
+    }
+
+    for (let id in Bullet.list) {
+      const bullet = Bullet.list[id];
+      if (this.getDistance(bullet) < 32 && bullet.parent !== this.id) {
+        //TODO: handle collision like hp--
+        bullet.toRemove = true;
+      }
+    }
+  }
+
+  shootBullet(angle) {
+    const b = new Bullet(this.id, angle);
+    b.x = this.x;
+    b.y = this.y;
   }
 
   static onConnect = socket => {
@@ -61,6 +82,12 @@ class Player extends Entity {
       }
       else if (data.inputId === "down") {
         player.pressingDown = data.state;
+      }
+      else if (data.inputId === "attack") {
+        player.pressingAttack = data.state;
+      }
+      else if (data.inputId === "mouseAngle") {
+        player.mouseAngle = data.state;
       }
     })
   }
