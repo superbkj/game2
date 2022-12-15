@@ -8,6 +8,8 @@ const express = require("express");
 const app = express();
 const server = require("http").Server(app);
 
+let DEBUG = true;
+
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/client/index.html");
 });
@@ -33,6 +35,25 @@ io.sockets.on("connection", socket => {
     Player.onDisconnect(socket);
   })
 
+  socket.on("sendMsgToServer", data => {
+    const playerName = ("" + socket.id).slice(2, 7);
+    const msg = playerName + ": " + data;
+    console.log("msg");
+
+    for (let id in SOCKET_LIST) {
+      const socket = SOCKET_LIST[id];
+      socket.emit("addToChat", msg);
+    }
+  })
+
+  socket.on("evalServer", data => {
+    if (!DEBUG) {
+      return;
+    }
+    
+    const res = eval(data);
+    socket.emit("evalAnswer", res);
+  })
   
 });
 
