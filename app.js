@@ -10,6 +10,60 @@ const server = require("http").Server(app);
 
 let DEBUG = true;
 
+let USERS = {
+  //username: password
+  "alice": "asd",
+  "bob": "bsd",
+  "carol": "csd"
+}
+
+const isValidPassword = (data) => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve(USERS[data.username] === data.password)
+    }, 1000);
+  })
+}
+
+/*
+const isValidPassword = (data) => {
+  return setTimeout(() => {
+    return USERS[data.username] === data.password;
+  }, 1000);
+}
+*/
+
+const isUsernameTaken = (data) => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve(USERS[data.username])
+    }, 1000);
+  })
+}
+/*
+const isUsernameTaken = (data) => {
+  return setTimeout(() => {
+    return USERS[data.username];
+  }, 1000);
+}
+*/
+
+const addUser = (data) => {
+  return new Promise((resolve, reject) => {
+    setTimeout(() => {
+      USERS[data.username] = data.password;
+      resolve();
+    }, 1000);
+  })
+}
+/*
+const addUser = (data) => {
+  return setTimeout(() => {
+    USERS[data.username] = data.password;
+  }, 1000);
+}
+*/
+
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/client/index.html");
 });
@@ -26,10 +80,37 @@ const io = require("socket.io")(server, {});
 io.sockets.on("connection", socket => {
   socket.id = Math.random();
   SOCKET_LIST[socket.id] = socket;
-  
+
   console.log("Socket connection. ID: " + socket.id);
-  Player.onConnect(socket);
-  
+
+  socket.on("signIn", data => {
+    isValidPassword(data)
+    .then(isValid => {
+      if (isValid) {
+        Player.onConnect(socket);
+        socket.emit("signInResponse", {success: true});
+      }
+      else {
+        socket.emit("signInResponse", {success: false});
+      }      
+    })
+  })
+
+  socket.on("signUp", data => {
+    isUsernameTaken(data)
+    .then(isTaken => {
+      if (isTaken) {
+        socket.emit("signUpResponse", {success: false});
+      }
+      else {
+        addUser(data)
+        .then(res => {
+          socket.emit("signUpResponse", {success: true});
+        })
+      }
+    })
+  })
+
   socket.on("disconnect", () => {
     delete SOCKET_LIST[socket.id];
     Player.onDisconnect(socket);
@@ -50,7 +131,7 @@ io.sockets.on("connection", socket => {
     if (!DEBUG) {
       return;
     }
-    
+
     const res = eval(data);
     socket.emit("evalAnswer", res);
   })
