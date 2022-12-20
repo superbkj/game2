@@ -1,6 +1,3 @@
-//import Player from "./classes/Player.js";
-//import Bullet from "./classes/Bullet.js";
-
 const Player = require("./classes/Player.js");
 const Bullet = require("./classes/Bullet.js");
 
@@ -8,46 +5,15 @@ const express = require("express");
 const app = express();
 const server = require("http").Server(app);
 
+const {
+  isValidPassword,
+  isUsernameTaken,
+  addUser
+} = require("./server/DBRelated.js");
+
 let DEBUG = true;
 
-let USERS = {
-  //username: password
-  "alice": "asd",
-  "bob": "bsd",
-  "carol": "csd"
-}
-
-const isValidPassword = (data) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      resolve(USERS[data.username] === data.password)
-    }, 1000);
-  })
-}
-
 /*
-const isValidPassword = (data) => {
-  return setTimeout(() => {
-    return USERS[data.username] === data.password;
-  }, 1000);
-}
-*/
-
-const isUsernameTaken = (data) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      resolve(USERS[data.username])
-    }, 1000);
-  })
-}
-/*
-const isUsernameTaken = (data) => {
-  return setTimeout(() => {
-    return USERS[data.username];
-  }, 1000);
-}
-*/
-
 const addUser = (data) => {
   return new Promise((resolve, reject) => {
     setTimeout(() => {
@@ -55,12 +21,6 @@ const addUser = (data) => {
       resolve();
     }, 1000);
   })
-}
-/*
-const addUser = (data) => {
-  return setTimeout(() => {
-    USERS[data.username] = data.password;
-  }, 1000);
 }
 */
 
@@ -88,15 +48,34 @@ io.sockets.on("connection", socket => {
     .then(isValid => {
       if (isValid) {
         Player.onConnect(socket);
+        console.log("Success: Sign in");
         socket.emit("signInResponse", {success: true});
       }
       else {
+        console.log("Fail: Sign in");
         socket.emit("signInResponse", {success: false});
-      }      
+      }
     })
+    .catch(err => console.error(err))
   })
 
+  
   socket.on("signUp", data => {
+    isUsernameTaken(data)
+    .then(isTaken => {
+      if (isTaken) {
+        socket.emit("signUpResponse", {success: false});
+      }
+      else {
+        addUser(data)
+        .then(result => {
+          console.log("Success: User registration")
+        })
+        socket.emit("signUpResponse", {success: true});
+      }
+    })
+    .catch(err => console.error(err))
+    /*
     isUsernameTaken(data)
     .then(isTaken => {
       if (isTaken) {
@@ -109,6 +88,7 @@ io.sockets.on("connection", socket => {
         })
       }
     })
+    */
   })
 
   socket.on("disconnect", () => {
