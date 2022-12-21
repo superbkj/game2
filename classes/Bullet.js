@@ -1,9 +1,10 @@
-//import Entity from "./Entity.js";
 const Entity = require("./Entity.js");
-//const Player = require("./Player.js");
 
 class Bullet extends Entity {
   static list = {};
+  static initPack = [];
+  static updatePack = [];
+  static removePack = [];
 
   constructor(parent, angle) {
     super();
@@ -15,6 +16,12 @@ class Bullet extends Entity {
     this.toRemove = false;
 
     Bullet.list[this.id] = this;
+
+    Bullet.initPack.push({
+      id: this.id,
+      x: this.x,
+      y: this.y
+    });
   }
 
   update() {
@@ -42,7 +49,7 @@ class Bullet extends Entity {
     */
   
     //Contains every player in the game
-    const pack = [];
+    this.updatePack = [];
   
     for (let id in Bullet.list) {
       const bullet = Bullet.list[id];
@@ -50,16 +57,29 @@ class Bullet extends Entity {
 
       if (bullet.toRemove) {
         delete Bullet.list[id];
+
+        this.removePack.push(bullet.id);
       }
       else {
-        pack.push({
+        this.updatePack.push({
+          id: bullet.id,
           x: bullet.x,
           y: bullet.y,
         });
       }
     }
   
-    return pack;
+    const result = {
+      initBullet: [...this.initPack],
+      updateBullet: [...this.updatePack],
+      removeBullet: [...this.removePack],
+    }
+
+    this.initPack = [];
+    this.updatePack = [];
+    this.removePack = [];
+    
+    return result;
   } 
 }
 

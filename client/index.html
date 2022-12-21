@@ -70,45 +70,126 @@
       alert("Sign up unsuccessful.");
     }
   })
+  
+  //classes used for client side
+  class PlayerForClient {
+    static list = {};
 
-  //game
-  const gameDiv = document.getElementById("gameDiv");
-  const chatText = document.getElementById("chat-text");
-  const chatInput = document.getElementById("chat-input");
-  const chatForm = document.getElementById("chat-form");
-  const ctx = document.getElementById("ctx").getContext("2d");
-  ctx.font = "30px Arial"  
+    constructor(initPack) {
+      this.id = initPack.id;
+      this.number = initPack.number;
+      this.x = initPack.x;
+      this.y = initPack.y;
 
-  socket.on("newPositions", data => {
-    ctx.clearRect(0, 0, 500, 500);
-
-    for (let i = 0; i < data.player.length; i++) {
-      ctx.fillText(data.player[i].number, data.player[i].x, data.player[i].y);
-    }
-
-    for (let i = 0; i < data.bullet.length; i++) {
-      ctx.fillRect(data.bullet[i].x - 5, data.bullet[i].y - 5, 10, 10);
-    }
-  })
-
-  socket.on("addToChat", (data) => {
-    chatText.innerHTML += "<div>" + data + "</div>";
-  })
-
-  socket.on("evalAnswer", (data) => {
-    console.log(data);
-  })
-
-  chatForm.onsubmit = (event) => {
-    event.preventDefault();
-    if (chatInput.value[0] === "/") {
-      socket.emit("evalServer", chatInput.value.slice(1));
-    }
-    else {
-      socket.emit("sendMsgToServer", chatInput.value);
-      chatInput.value = "";
+      PlayerForClient.list[this.id] = this;
     }
   }
+
+  class BulletForClient {
+    static list = {};
+
+    constructor(initPack) {
+      this.id = initPack.id;
+      this.x = initPack.x;
+      this.y = initPack.y;
+
+      BulletForClient.list[this.id] = this;
+      console.log("created");
+    }
+  }
+
+  //game
+  const ctx = document.getElementById("ctx").getContext("2d");
+  ctx.font = "30px Arial"
+    
+  /* data is like below
+    {
+      player: [
+        {
+          id: 123,        //for init, update, delete
+          number: "1",    //for init
+          x: 0,           //for init, update,
+          y: 0            //for init, update,
+        },
+        ...
+      ],
+      bullet: []
+    }
+  */
+
+  //init: When new stuff created, contains all the data
+  socket.on("init", data => {
+    for (let i = 0; i < data.player.length; i++) {
+      new PlayerForClient(data.player[i]);
+    }
+    for (let i = 0; i < data.bullet.length; i++) {
+      new BulletForClient(data.bullet[i]);
+      //console.log("bullet created")
+    }
+  });
+
+  //update: Only contains difference
+  socket.on("update", data => {
+    for (let i = 0; i < data.player.length; i++) {
+      const pack = data.player[i];
+      const plyr = PlayerForClient.list[pack.id];
+      if (plyr) { // plyrが存在しなかったらxやyにアクセスするとエラーになるため
+        if (plyr.x !== undefined) { // ???
+          plyr.x = pack.x;
+        }
+        if (plyr.y !== undefined) {
+          plyr.y = pack.y;
+        }
+      }
+    }
+    for (let i = 0; i < data.bullet.length; i++) {
+      const pack = data.bullet[i];
+      const bllt = BulletForClient.list[pack.id];
+      if (bllt) {
+        if (bllt.x !== undefined) {
+          bllt.x = pack.x;
+        }
+        if (bllt.y !== undefined) {
+          bllt.y = pack.y;
+        }
+      }
+    }
+  });
+
+  //remove: only contain id
+  socket.on("remove", data => {
+    //★★★console.log(data.player.length)が0のまま
+    for (let i = 0; i < data.player.length; i++) {
+      //console.log("deleting")
+      const id = data.player[i];
+      delete PlayerForClient.list[id]
+      //console.log("deleted")
+    }
+    for (let i = 0; i < data.bullet.length; i++) {
+      const id = data.bullet[i];
+      delete BulletForClient.list[id]
+    }
+  });
+
+  setInterval(() => {
+    ctx.clearRect(0, 0, 500, 500);
+
+    for (let id in PlayerForClient.list) {
+      ctx.fillText(
+        PlayerForClient.list[id].number,
+        PlayerForClient.list[id].x,
+        PlayerForClient.list[id].y
+      )
+    }
+
+    for (let id in BulletForClient.list) {
+      ctx.fillRect(
+        BulletForClient.list[id].x - 5,
+        BulletForClient.list[id].y - 5,
+        10, 10
+      )
+    }
+  }, 1000/25);
 
   document.onkeydown = event => {
     if (event.code === "ArrowRight") {
@@ -155,5 +236,32 @@
 
     socket.emit("keyPress", {inputId: "mouseAngle", state: angle});
   }
+
+  //chat
+  const gameDiv = document.getElementById("gameDiv");
+  const chatText = document.getElementById("chat-text");
+  const chatInput = document.getElementById("chat-input");
+  const chatForm = document.getElementById("chat-form");
+
+  socket.on("addToChat", (data) => {
+    chatText.innerHTML += "<div>" + data + "</div>";
+  })
+
+  socket.on("evalAnswer", (data) => {
+    console.log(data);
+  })
+
+  chatForm.onsubmit = (event) => {
+    event.preventDefault();
+    if (chatInput.value[0] === "/") {
+      socket.emit("evalServer", chatInput.value.slice(1));
+    }
+    else {
+      socket.emit("sendMsgToServer", chatInput.value);
+      chatInput.value = "";
+    }
+  }
+
+  
 
 </script>

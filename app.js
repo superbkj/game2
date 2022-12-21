@@ -13,17 +13,6 @@ const {
 
 let DEBUG = true;
 
-/*
-const addUser = (data) => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      USERS[data.username] = data.password;
-      resolve();
-    }, 1000);
-  })
-}
-*/
-
 app.get("/", (req, res) => {
   res.sendFile(__dirname + "/client/index.html");
 });
@@ -75,24 +64,11 @@ io.sockets.on("connection", socket => {
       }
     })
     .catch(err => console.error(err))
-    /*
-    isUsernameTaken(data)
-    .then(isTaken => {
-      if (isTaken) {
-        socket.emit("signUpResponse", {success: false});
-      }
-      else {
-        addUser(data)
-        .then(res => {
-          socket.emit("signUpResponse", {success: true});
-        })
-      }
-    })
-    */
   })
 
   socket.on("disconnect", () => {
     delete SOCKET_LIST[socket.id];
+    console.log("disconnect")
     Player.onDisconnect(socket);
   })
 
@@ -118,14 +94,38 @@ io.sockets.on("connection", socket => {
   
 });
 
+//const initPack = {player: [], bullet: []};
+//const removePack = {player: [], bullet: []};
+
 setInterval(() => {
-  const pack = {
-    player: Player.updateAll(),
-    bullet: Bullet.updateAll()
+  //const updatedPlayers = Player.updateAll();
+  //const updatedBullets = Bullet.updateAll();
+
+  const {initPlayer, updatePlayer, removePlayer} = Player.updateAll();
+  const {initBullet, updateBullet, removeBullet} = Bullet.updateAll();
+
+  const initPack = {
+    player: initPlayer,
+    bullet: initBullet
   }
+
+  const updatePack = {
+    player: updatePlayer,
+    bullet: updateBullet
+  }
+
+  const removePack = {
+    player: removePlayer,
+    bullet: removeBullet
+  }
+
+  //console.log("aaaaaa", removePack.player);
 
   for (let id in SOCKET_LIST) {
     const socket = SOCKET_LIST[id];
-    socket.emit("newPositions", pack);
+    socket.emit("init", initPack);
+    socket.emit("update", updatePack);
+    socket.emit("remove", removePack);
   }
+
 }, 1000/25)
