@@ -94,12 +94,7 @@ io.sockets.on("connection", socket => {
   
 });
 
-//const initPack = {player: [], bullet: []};
-//const removePack = {player: [], bullet: []};
-
 setInterval(() => {
-  //const updatedPlayers = Player.updateAll();
-  //const updatedBullets = Bullet.updateAll();
 
   const {initPlayer, updatePlayer, removePlayer} = Player.updateAll();
   const {initBullet, updateBullet, removeBullet} = Bullet.updateAll();
@@ -118,8 +113,6 @@ setInterval(() => {
     player: removePlayer,
     bullet: removeBullet
   }
-
-  //console.log("aaaaaa", removePack.player);
 
   for (let id in SOCKET_LIST) {
     const socket = SOCKET_LIST[id];

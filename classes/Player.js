@@ -18,23 +18,39 @@ class Player extends Entity {
     this.pressingAttack = false;
     this.mouseAngle = 0;
     this.maxSpd = 10;
+    this.hp = 10;
+    this.hpMax = 10;
+    this.score = 0;
 
     Player.list[id] = this;
 
-    Player.initPack.push({
+    Player.initPack.push(this.getDataForInit());
+  }
+
+  getDataForInit() {
+    return {
       id: this.id,
       x: this.x,
       y: this.y,
-      number: this.number
-    });
+      number: this.number,
+      hp: this.hp,
+      hpMax: this.hpMax,
+      score: this.score
+    };
+  }
 
-    //console.log([...Player.initPack]);
+  getDataForUpdate() {
+    return {
+      id: this.id,
+      x: this.x,
+      y: this.y,
+      hp: this.hp,
+      score: this.score
+    };
   }
 
   updateSpd() {
-    //console.log("Updating speed...");
     if (this.pressingRight) {
-      //console.log("Right spped");
       this.spdX = this.maxSpd;
     }
     else if (this.pressingLeft) {
@@ -66,9 +82,21 @@ class Player extends Entity {
     for (let id in Bullet.list) {
       const bullet = Bullet.list[id];
       if (this.getDistance(bullet) < 32 && bullet.parent !== this.id) {
-        //TODO: handle collision like hp--
+        this.hp -= 1;
+        if (this.hp <= 0) {
+          console.log(`Player ${this.id} dead. respawning...`)
+          this.hp = this.hpMax;
+          this.x = Math.random() * 500;
+          this.y = Math.random() * 500;
+
+          //bullet.parentのIDを持つPlayerがまだ存在すればスコアアップ
+          const shooter = Player.list[bullet.parent]
+          if (shooter) { 
+            shooter.score += 1;
+          }
+        }
+
         bullet.toRemove = true;
-        //console.log("Collide")
       }
     }
   }
@@ -77,6 +105,14 @@ class Player extends Entity {
     const b = new Bullet(this.id, angle);
     b.x = this.x;
     b.y = this.y;
+  }
+
+  static getPlayersForSignInPlayer = () => {
+    const players = [];
+    for (let id in Player.list) {
+      players.push(Player.list[id].getDataForInit());
+    }
+    return players;
   }
 
   static onConnect = socket => {
@@ -102,48 +138,37 @@ class Player extends Entity {
         player.mouseAngle = data.state;
       }
     })
+
+    socket.emit("init", {
+      player: this.getPlayersForSignInPlayer(),
+      bullet: Bullet.getBulletsForSignInPlayer()
+    })
   }
   
   static onDisconnect = socket => {
-    //console.log(Player.list[socket.id] ? "Aru" : "Nai");
     delete Player.list[socket.id];
-    //console.log(Player.list[socket.id] ? "Aru" : "Nai")
 
     this.removePack.push(socket.id);
-    //表示される: console.log("onDisconnect: ", [...this.removePack])
   }
   
   static updateAll = () => {
-    //this.updatePack = [];
   
     for (let id in Player.list) {
       const player = Player.list[id];
       player.update();
-      this.updatePack.push({
-        id: player.id,
-        x: player.x,
-        y: player.y
-      });
+      this.updatePack.push(player.getDataForUpdate());
     }
 
     const result = {
       initPlayer: [...this.initPack],
       updatePlayer: [...this.updatePack],
       removePlayer: [...this.removePack],
-      /*
-      initPack: this.initPack,
-      updatePack: this.updatePack,
-      removePack: this.removePack,
-      */
     }
-
-    //表示される: console.log(result.removePack)
     
     this.initPack = [];
     this.updatePack = [];
     this.removePack = [];
     
-    //console.log(result)
     return result;
   }
 }

@@ -80,8 +80,18 @@
       this.number = initPack.number;
       this.x = initPack.x;
       this.y = initPack.y;
+      this.hp = initPack.hp;
+      this.hpMax = initPack.hpMax;
+      this.score = initPack.score;
 
       PlayerForClient.list[this.id] = this;
+    }
+
+    draw() {
+      const hpWidth = 30 * this.hp / this.hpMax;
+      ctx.fillRect(this.x - hpWidth/2, this.y - 40, hpWidth, 4);
+      ctx.fillText(this.number, this.x, this.y);
+      ctx.fillText(this.score, this.x, this.y - 60);
     }
   }
 
@@ -96,26 +106,15 @@
       BulletForClient.list[this.id] = this;
       console.log("created");
     }
+
+    draw() {
+      ctx.fillRect(this.x - 5, this.y - 5, 10, 10);
+    }
   }
 
   //game
   const ctx = document.getElementById("ctx").getContext("2d");
   ctx.font = "30px Arial"
-    
-  /* data is like below
-    {
-      player: [
-        {
-          id: 123,        //for init, update, delete
-          number: "1",    //for init
-          x: 0,           //for init, update,
-          y: 0            //for init, update,
-        },
-        ...
-      ],
-      bullet: []
-    }
-  */
 
   //init: When new stuff created, contains all the data
   socket.on("init", data => {
@@ -140,6 +139,12 @@
         if (plyr.y !== undefined) {
           plyr.y = pack.y;
         }
+        if (plyr.hp !== undefined) {
+          plyr.hp = pack.hp;
+        }
+        if (plyr.score !== undefined) {
+          plyr.score = pack.score;
+        }
       }
     }
     for (let i = 0; i < data.bullet.length; i++) {
@@ -158,12 +163,9 @@
 
   //remove: only contain id
   socket.on("remove", data => {
-    //★★★console.log(data.player.length)が0のまま
     for (let i = 0; i < data.player.length; i++) {
-      //console.log("deleting")
       const id = data.player[i];
-      delete PlayerForClient.list[id]
-      //console.log("deleted")
+      delete PlayerForClient.list[id];
     }
     for (let i = 0; i < data.bullet.length; i++) {
       const id = data.bullet[i];
@@ -175,19 +177,11 @@
     ctx.clearRect(0, 0, 500, 500);
 
     for (let id in PlayerForClient.list) {
-      ctx.fillText(
-        PlayerForClient.list[id].number,
-        PlayerForClient.list[id].x,
-        PlayerForClient.list[id].y
-      )
+      PlayerForClient.list[id].draw();
     }
 
     for (let id in BulletForClient.list) {
-      ctx.fillRect(
-        BulletForClient.list[id].x - 5,
-        BulletForClient.list[id].y - 5,
-        10, 10
-      )
+      BulletForClient.list[id].draw();
     }
   }, 1000/25);
 

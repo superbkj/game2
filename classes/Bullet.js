@@ -17,11 +17,23 @@ class Bullet extends Entity {
 
     Bullet.list[this.id] = this;
 
-    Bullet.initPack.push({
+    Bullet.initPack.push(this.getDataForInit());
+  }
+
+  getDataForInit() {
+    return {
+      id: this.id,
+      x: this.x,
+      y: this.y,
+    };
+  }
+
+  getDataForUpdate() {
+    return {
       id: this.id,
       x: this.x,
       y: this.y
-    });
+    };
   }
 
   update() {
@@ -29,28 +41,18 @@ class Bullet extends Entity {
       this.toRemove = true;
     }
     super.update();
-
-    /*
-    for (let id in Player.list) {
-      const player = Player.list[id];
-      if (this.getDistance(player) < 32 && this.parent !== player.id) {
-        //TODO: handle collision like hp--
-        this.toRemove = true;
-      }
-    }
-    */
   }
 
-  static updateAll = () => {
-    /*
-    if (Math.random() < 0.1) {
-      new Bullet(Math.random() * 360);
+  static getBulletsForSignInPlayer = () => {
+    const bullets = [];
+    for (let id in Bullet.list) {
+      bullets.push(Bullet.list[id].getDataForInit());
     }
-    */
-  
-    //Contains every player in the game
-    this.updatePack = [];
-  
+    return bullets;
+  }
+
+
+  static updateAll = () => {
     for (let id in Bullet.list) {
       const bullet = Bullet.list[id];
       bullet.update();
@@ -61,11 +63,7 @@ class Bullet extends Entity {
         this.removePack.push(bullet.id);
       }
       else {
-        this.updatePack.push({
-          id: bullet.id,
-          x: bullet.x,
-          y: bullet.y,
-        });
+        this.updatePack.push(bullet.getDataForUpdate());
       }
     }
   
