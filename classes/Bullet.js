@@ -6,7 +6,7 @@ class Bullet extends Entity {
   static updatePack = [];
   static removePack = [];
 
-  constructor(parent, angle) {
+  constructor(parent, angle, x, y) {
     super();
     this.id = Math.random();
     this.spdX = Math.cos(angle/180*Math.PI) * 10;
@@ -14,6 +14,8 @@ class Bullet extends Entity {
     this.parent = parent;
     this.timer = 0;
     this.toRemove = false;
+    this.x = x;
+    this.y = y;
 
     Bullet.list[this.id] = this;
 

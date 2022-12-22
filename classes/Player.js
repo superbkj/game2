@@ -102,9 +102,9 @@ class Player extends Entity {
   }
 
   shootBullet(angle) {
-    const b = new Bullet(this.id, angle);
-    b.x = this.x;
-    b.y = this.y;
+    const b = new Bullet(this.id, angle, this.x, this.y);
+    //b.x = this.x;
+    //b.y = this.y;
   }
 
   static getPlayersForSignInPlayer = () => {
