@@ -28,6 +28,9 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
+  const WIDTH = 500;
+  const HEIGHT = 500;
+
   //Initialize the connection between client and server
   const socket = io();
 
@@ -70,7 +73,7 @@
       alert("Sign up unsuccessful.");
     }
   })
-  
+
   //classes used for client side
   class PlayerForClient {
     static list = {};
@@ -88,10 +91,23 @@
     }
 
     draw() {
+      const displayX = this.x - PlayerForClient.list[selfId].x + WIDTH/2;
+      const displayY = this.y - PlayerForClient.list[selfId].y + HEIGHT/2;
+      
       const hpWidth = 30 * this.hp / this.hpMax;
-      ctx.fillRect(this.x - hpWidth/2, this.y - 40, hpWidth, 4);
-      ctx.fillText(this.number, this.x, this.y);
-      ctx.fillText(this.score, this.x, this.y - 60);
+      ctx.fillStyle = "red";
+      ctx.fillRect(displayX - hpWidth/2, displayY - 40, hpWidth, 4);
+      
+      const width = Img.player.width * 2;
+      const height = Img.player.height * 2;
+      
+      ctx.drawImage(
+        Img.player,
+        0, 0, Img.player.width, Img.player.height,
+        displayX - width/2, displayY - height/2, width, height
+      )
+      //ctx.fillText(this.number, this.x, this.y);
+      //ctx.fillText(this.score, this.x, this.y - 60);
     }
   }
 
@@ -104,20 +120,45 @@
       this.y = initPack.y;
 
       BulletForClient.list[this.id] = this;
-      console.log("created");
+      //console.log("created");
     }
 
     draw() {
-      ctx.fillRect(this.x - 5, this.y - 5, 10, 10);
+      const displayX = this.x - PlayerForClient.list[selfId].x + WIDTH/2;
+      const displayY = this.y - PlayerForClient.list[selfId].y + HEIGHT/2;
+      
+      const width = Img.bullet.width / 2;
+      const height = Img.bullet.height / 2;
+      
+      ctx.drawImage(
+        Img.bullet,
+        0, 0, Img.bullet.width, Img.bullet.height,
+        displayX - width/2, displayY - height/2, width, height
+      )
+      //ctx.fillRect(this.x - 5, this.y - 5, 10, 10);
     }
   }
 
   //game
+  const Img = {};
+  Img.player = new Image();
+  Img.player.src = "/client/img/player.png";
+  Img.bullet = new Image();
+  Img.bullet.src = "/client/img/bullet.png";
+  Img.map = new Image();
+  Img.map.src = "/client/img/map.png";
+
   const ctx = document.getElementById("ctx").getContext("2d");
   ctx.font = "30px Arial"
 
-  //init: When new stuff created, contains all the data
+  let selfId;
   socket.on("init", data => {
+    if (data.selfId) {
+      selfId = data.selfId;
+    }
+
+    //console.log(selfId);
+
     for (let i = 0; i < data.player.length; i++) {
       new PlayerForClient(data.player[i]);
     }
@@ -174,7 +215,13 @@
   });
 
   setInterval(() => {
+    if (!selfId) { //サインインしてOnConnectが呼ばれてからselfIdが来る。サインインするまでは描画しない
+      return;
+    }
+
     ctx.clearRect(0, 0, 500, 500);
+    drawMap();
+    drawScore();
 
     for (let id in PlayerForClient.list) {
       PlayerForClient.list[id].draw();
@@ -184,6 +231,17 @@
       BulletForClient.list[id].draw();
     }
   }, 1000/25);
+
+  const drawMap = () => {
+    const x = WIDTH/2 - PlayerForClient.list[selfId].x;
+    const y = HEIGHT/2 - PlayerForClient.list[selfId].y;
+    ctx.drawImage(Img.map, x, y);
+  }
+
+  const drawScore = () => {
+    ctx.fillStyle = "white";
+    ctx.fillText(PlayerForClient.list[selfId].score, 0 , 30);
+  }
 
   document.onkeydown = event => {
     if (event.code === "ArrowRight") {

@@ -139,7 +139,8 @@ class Player extends Entity {
       }
     })
 
-    socket.emit("init", {
+    socket.emit("init", { 
+      selfId: socket.id,
       player: this.getPlayersForSignInPlayer(),
       bullet: Bullet.getBulletsForSignInPlayer()
     })
