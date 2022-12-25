@@ -86,11 +86,16 @@
       this.hp = initPack.hp;
       this.hpMax = initPack.hpMax;
       this.score = initPack.score;
+      this.map = initPack.map;
 
       PlayerForClient.list[this.id] = this;
     }
 
     draw() {
+      if (PlayerForClient.list[selfId].map !== this.map) {
+        return;
+      }
+
       const displayX = this.x - PlayerForClient.list[selfId].x + WIDTH/2;
       const displayY = this.y - PlayerForClient.list[selfId].y + HEIGHT/2;
       
@@ -118,12 +123,17 @@
       this.id = initPack.id;
       this.x = initPack.x;
       this.y = initPack.y;
+      this.map = initPack.map;
 
       BulletForClient.list[this.id] = this;
       //console.log("created");
     }
 
     draw() {
+      if (PlayerForClient.list[selfId].map !== this.map) {
+        return;
+      }
+
       const displayX = this.x - PlayerForClient.list[selfId].x + WIDTH/2;
       const displayY = this.y - PlayerForClient.list[selfId].y + HEIGHT/2;
       
@@ -145,8 +155,12 @@
   Img.player.src = "/client/img/player.png";
   Img.bullet = new Image();
   Img.bullet.src = "/client/img/bullet.png";
-  Img.map = new Image();
-  Img.map.src = "/client/img/map.png";
+  
+  Img.map = {};
+  Img.map["field"] = new Image();
+  Img.map["field"].src = "/client/img/map.png";
+  Img.map["forest"] = new Image();
+  Img.map["forest"].src = "/client/img/map2.png";
 
   const ctx = document.getElementById("ctx").getContext("2d");
   ctx.font = "30px Arial"
@@ -233,9 +247,10 @@
   }, 1000/25);
 
   const drawMap = () => {
-    const x = WIDTH/2 - PlayerForClient.list[selfId].x;
-    const y = HEIGHT/2 - PlayerForClient.list[selfId].y;
-    ctx.drawImage(Img.map, x, y);
+    const player = PlayerForClient.list[selfId];
+    const x = WIDTH/2 - player.x;
+    const y = HEIGHT/2 - player.y;
+    ctx.drawImage(Img.map[player.map], x, y);
   }
 
   const drawScore = () => {

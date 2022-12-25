@@ -6,16 +6,17 @@ class Bullet extends Entity {
   static updatePack = [];
   static removePack = [];
 
-  constructor(parent, angle, x, y) {
-    super();
+  constructor(params) { //parent, angle, x, y
+    super(params);
     this.id = Math.random();
-    this.spdX = Math.cos(angle/180*Math.PI) * 10;
-    this.spdY = Math.sin(angle/180*Math.PI) * 10;
-    this.parent = parent;
+    this.angle = params.angle;
+    this.spdX = Math.cos(params.angle/180*Math.PI) * 10;
+    this.spdY = Math.sin(params.angle/180*Math.PI) * 10;
+    this.parent = params.parent;
     this.timer = 0;
     this.toRemove = false;
-    this.x = x;
-    this.y = y;
+    //this.x = params.x;
+    //this.y = params.y;
 
     Bullet.list[this.id] = this;
 
@@ -27,6 +28,7 @@ class Bullet extends Entity {
       id: this.id,
       x: this.x,
       y: this.y,
+      map: this.map
     };
   }
 

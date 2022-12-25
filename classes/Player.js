@@ -7,9 +7,9 @@ class Player extends Entity {
   static updatePack = [];
   static removePack = [];
 
-  constructor(id) {
-    super();
-    this.id = id;
+  constructor(params) {
+    super(params);
+    //this.id = id;
     this.number = "" + Math.floor(10 * Math.random());
     this.pressingRight = false;
     this.pressingLeft = false;
@@ -22,7 +22,7 @@ class Player extends Entity {
     this.hpMax = 10;
     this.score = 0;
 
-    Player.list[id] = this;
+    Player.list[this.id] = this;
 
     Player.initPack.push(this.getDataForInit());
   }
@@ -35,7 +35,8 @@ class Player extends Entity {
       number: this.number,
       hp: this.hp,
       hpMax: this.hpMax,
-      score: this.score
+      score: this.score,
+      map: this.map
     };
   }
 
@@ -81,7 +82,7 @@ class Player extends Entity {
 
     for (let id in Bullet.list) {
       const bullet = Bullet.list[id];
-      if (this.getDistance(bullet) < 32 && bullet.parent !== this.id) {
+      if (this.map === bullet.map && this.getDistance(bullet) < 32 && bullet.parent !== this.id) {
         this.hp -= 1;
         if (this.hp <= 0) {
           console.log(`Player ${this.id} dead. respawning...`)
@@ -102,9 +103,13 @@ class Player extends Entity {
   }
 
   shootBullet(angle) {
-    const b = new Bullet(this.id, angle, this.x, this.y);
-    //b.x = this.x;
-    //b.y = this.y;
+    const b = new Bullet({
+      parent: this.id,
+      angle: angle,
+      x: this.x,
+      y: this.y,
+      map: this.map
+    });
   }
 
   static getPlayersForSignInPlayer = () => {
@@ -116,7 +121,15 @@ class Player extends Entity {
   }
 
   static onConnect = socket => {
-    const player = new Player(socket.id);
+    let map = "forest";
+    if (Math.random() < 0.5) {
+      map = "field";
+    }
+
+    const player = new Player({
+      id: socket.id,
+      map: map
+    });
 
     socket.on("keyPress", data => {
       if (data.inputId === "right") {

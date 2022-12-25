@@ -1,10 +1,11 @@
 class Entity {
-  constructor() {
-    this.x = 250,
-    this.y = 250,
+  constructor(params) { // paramsはオブジェクト
+    this.x = params.x ? params.x : 250,
+    this.y = params.y ? params.y : 250,
     this.spdX = 0,
     this.spdY = 0,
-    this.id = ""
+    this.id = params.id ? params.id : "",
+    this.map = params.map ? params.map : "forest"
   }
 
   updatePosition() {
