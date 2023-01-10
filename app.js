@@ -5,6 +5,9 @@ const express = require("express");
 const app = express();
 const server = require("http").Server(app);
 
+const profiler = require('v8-profiler-next');
+const fs = require("fs");
+
 const {
   isValidPassword,
   isUsernameTaken,
@@ -122,3 +125,17 @@ setInterval(() => {
   }
 
 }, 1000/25)
+
+const startProfiling = duration => {
+  profiler.startProfiling("1", true);
+  setTimeout(() => {
+    const profile1 = profiler.stopProfiling("1");
+
+    profile1.export((error, result) => {
+      fs.writeFileSync("./profile.cpuprofile", result);
+      profile1.delete();
+      console.log("Profile saved.");
+    })
+  }, duration)
+}
+startProfiling(10000);
