@@ -46,7 +46,8 @@ class Player extends Entity {
       x: this.x,
       y: this.y,
       hp: this.hp,
-      score: this.score
+      score: this.score,
+      map: this.map
     };
   }
 
@@ -149,6 +150,15 @@ class Player extends Entity {
       }
       else if (data.inputId === "mouseAngle") {
         player.mouseAngle = data.state;
+      }
+    });
+
+    socket.on("changeMap", data => {
+      if (player.map === "field") {
+        player.map = "forest";
+      }
+      else {
+        player.map = "field";
       }
     })
 
